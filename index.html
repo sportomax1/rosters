@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>NCAA Basketball Roster Lab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">PS3 SAVE RESEARCH TOOL</p>
+      <h1>NCAA Basketball Roster Lab</h1>
+      <p class="subtitle">Compare and inspect NCAA Basketball 10 <code>SYS-DATA</code> roster saves locally in your browser.</p>
+    </div>
+    <span class="privacy-badge">Local-only processing</span>
+  </header>
+
+  <main>
+    <section class="panel upload-grid" aria-labelledby="load-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="load-heading">1. Load controlled roster saves</h2>
+          <p>Use two saves where you changed exactly one known item, such as a rating from 70 to 71.</p>
+        </div>
+        <button id="clearAll" class="button secondary" type="button">Clear all</button>
+      </div>
+
+      <label class="drop-zone" id="dropA">
+        <span class="drop-title">Original file (A)</span>
+        <span class="drop-copy">Drop <code>SYS-DATA</code> here or choose a file</span>
+        <input id="fileA" type="file">
+        <span id="metaA" class="file-meta">No file loaded</span>
+      </label>
+
+      <label class="drop-zone" id="dropB">
+        <span class="drop-title">Modified file (B)</span>
+        <span class="drop-copy">Drop the controlled-change version here</span>
+        <input id="fileB" type="file">
+        <span id="metaB" class="file-meta">No file loaded</span>
+      </label>
+    </section>
+
+    <section class="metrics" aria-live="polite">
+      <article class="metric"><span>File A size</span><strong id="sizeA">—</strong></article>
+      <article class="metric"><span>File B size</span><strong id="sizeB">—</strong></article>
+      <article class="metric"><span>Changed bytes</span><strong id="changedCount">—</strong></article>
+      <article class="metric"><span>Change regions</span><strong id="regionCount">—</strong></article>
+    </section>
+
+    <section class="panel" aria-labelledby="diff-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="diff-heading">2. Difference analysis</h2>
+          <p>Adjacent changed bytes are grouped into regions. Select a row to inspect nearby bytes.</p>
+        </div>
+        <div class="button-row">
+          <button id="compareButton" class="button primary" type="button" disabled>Compare files</button>
+          <button id="exportReport" class="button secondary" type="button" disabled>Export report</button>
+        </div>
+      </div>
+
+      <div class="controls-grid">
+        <label>Context bytes
+          <input id="contextBytes" type="number" min="0" max="256" value="16">
+        </label>
+        <label>Merge gap
+          <input id="mergeGap" type="number" min="0" max="64" value="0">
+        </label>
+        <label>Max displayed regions
+          <input id="maxRegions" type="number" min="10" max="5000" value="500">
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Length</th>
+              <th>A bytes</th>
+              <th>B bytes</th>
+            </tr>
+          </thead>
+          <tbody id="diffRows">
+            <tr><td colspan="6" class="empty-state">Load two files and run Compare.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="inspect-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="inspect-heading">3. Hex inspector</h2>
+          <p>Jump to an offset or select a difference region. Changed bytes are highlighted.</p>
+        </div>
+      </div>
+
+      <div class="controls-grid inspector-controls">
+        <label>Offset (decimal or 0x hex)
+          <input id="offsetInput" type="text" value="0" inputmode="text">
+        </label>
+        <label>Bytes per row
+          <select id="bytesPerRow">
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="32">32</option>
+          </select>
+        </label>
+        <label>Rows
+          <input id="rowCount" type="number" min="4" max="64" value="16">
+        </label>
+        <button id="inspectButton" class="button primary align-end" type="button" disabled>Inspect</button>
+      </div>
+
+      <div id="hexViewer" class="hex-viewer" tabindex="0">
+        <p class="empty-state">Load at least one file to inspect bytes.</p>
+      </div>
+    </section>
+
+    <section class="panel tools-grid" aria-labelledby="search-heading">
+      <div>
+        <h2 id="search-heading">4. Search values</h2>
+        <p>Search each loaded file for ASCII text, a byte sequence, or an integer value.</p>
+
+        <div class="stacked-controls">
+          <label>Search type
+            <select id="searchType">
+              <option value="ascii">ASCII text</option>
+              <option value="hex">Hex bytes</option>
+              <option value="uint8">8-bit integer</option>
+              <option value="uint16le">16-bit integer, little-endian</option>
+              <option value="uint16be">16-bit integer, big-endian</option>
+              <option value="uint32le">32-bit integer, little-endian</option>
+              <option value="uint32be">32-bit integer, big-endian</option>
+            </select>
+          </label>
+          <label>Value
+            <input id="searchValue" type="text" placeholder="Example: 46 or 4B 65 76 69 6E">
+          </label>
+          <button id="searchButton" class="button primary" type="button" disabled>Search files</button>
+        </div>
+      </div>
+
+      <div>
+        <h3>Matches</h3>
+        <div id="searchResults" class="result-list">
+          <p class="empty-state">No search performed.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="notes-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="notes-heading">5. Experiment notes</h2>
+          <p>Record the exact in-game change that produced file B.</p>
+        </div>
+      </div>
+      <textarea id="experimentNotes" rows="6" placeholder="Example: Colorado player #12, three-point rating changed from 70 to 71. No other changes. Saved immediately afterward."></textarea>
+    </section>
+  </main>
+
+  <footer>
+    <p>This tool does not decrypt, resign, or upload PS3 saves. Always work from backups.</p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
