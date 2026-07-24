@@ -1,0 +1,34 @@
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Real save and game files must never be committed
+samples/private/
+research/files/
+research/exports/
+saves/
+rosters/
+*.SYS-DATA
+*.sys-data
+*.PFD
+*.SFO
+PARAM.PFD
+PARAM.SFO
+
+# Archives may contain copyrighted saves
+*.zip
+*.7z
+*.rar
+
+# Local reports
+roster-diff-*.json
+*.local.json
