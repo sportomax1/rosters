@@ -10,61 +10,69 @@
 <body>
   <header class="app-header">
     <div>
-      <p class="eyebrow">PS3 SAVE RESEARCH TOOL</p>
+      <p class="eyebrow">PS3 ROSTER RESEARCH</p>
       <h1>NCAA Basketball Roster Lab</h1>
-      <p class="subtitle">Compare, inspect, and map NCAA Basketball 10 <code>SYS-DATA</code> roster saves locally in your browser.</p>
+      <p class="subtitle">Upload a roster and view the current best-guess player table. Everything stays in your browser.</p>
     </div>
-    <span class="privacy-badge">Local-only processing</span>
+    <span class="privacy-badge">Local-only</span>
   </header>
 
   <main>
     <section class="panel upload-grid" aria-labelledby="load-heading">
       <div class="section-heading">
-        <div>
-          <h2 id="load-heading">1. Load controlled roster saves</h2>
-          <p>File A should be the original. File B should be the same roster after one player was edited.</p>
-        </div>
-        <button id="clearAll" class="button secondary" type="button">Clear all</button>
+        <div><h2 id="load-heading">Upload roster files</h2><p>File A is enough for the roster table. Add File B only when comparing an edited save.</p></div>
+        <button id="clearAll" class="button secondary" type="button">Clear</button>
       </div>
-      <label class="drop-zone" id="dropA"><span class="drop-title">Original file (A)</span><span class="drop-copy">Drop <code>SYS-DATA</code> here or choose a file</span><input id="fileA" type="file"><span id="metaA" class="file-meta">No file loaded</span></label>
-      <label class="drop-zone" id="dropB"><span class="drop-title">Modified file (B)</span><span class="drop-copy">Drop the controlled-change version here</span><input id="fileB" type="file"><span id="metaB" class="file-meta">No file loaded</span></label>
+      <label class="drop-zone" id="dropA"><span class="drop-title">Roster file A</span><span class="drop-copy">Choose or drop <code>SYS-DATA</code></span><input id="fileA" type="file"><span id="metaA" class="file-meta">No file loaded</span></label>
+      <label class="drop-zone" id="dropB"><span class="drop-title">Optional file B</span><span class="drop-copy">Use the changed version for comparison</span><input id="fileB" type="file"><span id="metaB" class="file-meta">No file loaded</span></label>
     </section>
 
-    <section class="metrics" aria-live="polite">
-      <article class="metric"><span>File A size</span><strong id="sizeA">—</strong></article><article class="metric"><span>File B size</span><strong id="sizeB">—</strong></article><article class="metric"><span>Changed bytes</span><strong id="changedCount">—</strong></article><article class="metric"><span>Change regions</span><strong id="regionCount">—</strong></article>
-    </section>
+    <nav class="tab-bar" aria-label="App views">
+      <button class="tab-button active" type="button" data-tab="roster">Roster Table</button>
+      <button class="tab-button" type="button" data-tab="research">Compare / Research</button>
+    </nav>
 
-    <section class="panel" aria-labelledby="diff-heading">
-      <div class="section-heading"><div><h2 id="diff-heading">2. Difference analysis</h2><p>Adjacent changed bytes are grouped into regions. Select a row to inspect nearby bytes.</p></div><div class="button-row"><button id="compareButton" class="button primary" type="button" disabled>Compare files</button><button id="exportReport" class="button secondary" type="button" disabled>Export report</button></div></div>
-      <div class="controls-grid"><label>Context bytes<input id="contextBytes" type="number" min="0" max="256" value="16"></label><label>Merge gap<input id="mergeGap" type="number" min="0" max="64" value="0"></label><label>Max displayed regions<input id="maxRegions" type="number" min="10" max="5000" value="500"></label></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Start</th><th>End</th><th>Length</th><th>A bytes</th><th>B bytes</th></tr></thead><tbody id="diffRows"><tr><td colspan="6" class="empty-state">Load two files and run Compare.</td></tr></tbody></table></div>
-    </section>
+    <div id="tab-roster" class="tab-view active">
+      <section class="panel roster-panel">
+        <div class="section-heading">
+          <div><h2>Best-guess roster table</h2><p>Every detected player becomes one row. Confirmed guesses are labeled; raw candidates remain visible for comparison.</p></div>
+          <div class="button-row"><select id="rosterSource" aria-label="Roster source"><option value="A">Use File A</option><option value="B">Use File B</option></select><button id="scanRoster" class="button primary" type="button" disabled>Scan players</button></div>
+        </div>
+        <div class="roster-toolbar">
+          <label>Search players<input id="rosterSearch" type="search" placeholder="Grayson Allen"></label>
+          <label>Rows shown<select id="rosterLimit"><option>100</option><option selected>500</option><option>1000</option><option value="99999">All</option></select></label>
+          <button id="exportRosterCsv" class="button secondary align-end" type="button" disabled>Export CSV</button>
+        </div>
+        <div id="rosterSummary" class="simple-summary" aria-live="polite">Upload File A, then click <strong>Scan players</strong>.</div>
+        <div class="table-wrap roster-table-wrap">
+          <table class="roster-table">
+            <thead><tr><th>Player</th><th>Record</th><th title="Current high-confidence guess">Field Goal*</th><th title="Current high-confidence guess">Inside Scoring*</th><th title="Possible derived overall field; raw byte">Overall raw?</th><th title="Possible status/role field; raw byte">Status raw?</th><th>Raw +BA</th><th>Raw +CB</th><th>Raw +CE</th><th>Raw +FA</th></tr></thead>
+            <tbody id="rosterRows"><tr><td colspan="10" class="empty-state">No roster scanned yet.</td></tr></tbody>
+          </table>
+        </div>
+        <p class="table-note"><strong>*Current best guesses:</strong> Field Goal = byte at record +0xCB minus 50. Inside Scoring = 210 minus byte at record +0xBA. Other columns are intentionally raw until better mappings are proven.</p>
+      </section>
+    </div>
 
-    <section class="panel mapper-panel" aria-labelledby="mapper-heading">
-      <div class="section-heading"><div><p class="eyebrow">NEW</p><h2 id="mapper-heading">3. Player Field Mapper</h2><p>Find a player record, isolate its changed bytes, and rank likely stat mappings. Guesses remain editable and can be exported or imported later.</p></div><div class="button-row"><button id="graysonPreset" class="button secondary" type="button">Load Grayson test</button><button id="runMapper" class="button primary" type="button" disabled>Analyze player</button></div></div>
-      <div class="mapper-identity-grid"><label>First name<input id="mapperFirstName" type="text" placeholder="GRAYSON" autocomplete="off"></label><label>Last name<input id="mapperLastName" type="text" placeholder="ALLEN" autocomplete="off"></label><label>Player record size<input id="mapperRecordSize" type="number" min="64" max="1024" value="268"></label><label>First-name offset in record<input id="mapperNameOffset" type="text" value="0xD0"></label></div>
-      <div class="mapper-layout"><div><div class="subheading-row"><div><h3>Visible rating changes</h3><p>Enter only the ratings you know changed in the game.</p></div><button id="addStatRow" class="button secondary compact" type="button">Add rating</button></div><div class="table-wrap mapper-stat-wrap"><table class="mapper-table compact-table"><thead><tr><th>Rating</th><th>Before</th><th>After</th><th></th></tr></thead><tbody id="visibleStatRows"></tbody></table></div></div><aside class="mapper-summary" id="mapperSummary" aria-live="polite"><h3>Analysis status</h3><p>Load both files, enter the player name, then run the mapper.</p></aside></div>
-      <div class="mapper-results-heading"><div><h3>Candidate byte mappings</h3><p>The app scores exact direct, offset, inverse, and scaled relationships. A high score is evidence—not final proof.</p></div><div class="button-row"><button id="saveMappings" class="button secondary" type="button" disabled>Save in browser</button><button id="exportMappings" class="button secondary" type="button" disabled>Export mapping JSON</button><label class="button secondary file-button">Import mapping JSON<input id="importMappings" type="file" accept="application/json,.json"></label></div></div>
-      <div class="table-wrap"><table class="mapper-table"><thead><tr><th>Absolute offset</th><th>Record offset</th><th>A → B</th><th>Δ</th><th>Suggested field</th><th>Encoding guess</th><th>Confidence</th><th>Action</th></tr></thead><tbody id="mapperRows"><tr><td colspan="8" class="empty-state">No player analysis yet.</td></tr></tbody></table></div>
-      <div class="saved-map-block"><h3>Saved field map</h3><div id="savedMapList" class="saved-map-list"><p class="empty-state">No saved mappings yet.</p></div></div>
-    </section>
+    <div id="tab-research" class="tab-view">
+      <section class="metrics" aria-live="polite"><article class="metric"><span>File A size</span><strong id="sizeA">—</strong></article><article class="metric"><span>File B size</span><strong id="sizeB">—</strong></article><article class="metric"><span>Changed bytes</span><strong id="changedCount">—</strong></article><article class="metric"><span>Change regions</span><strong id="regionCount">—</strong></article></section>
 
-    <section class="panel" aria-labelledby="inspect-heading">
-      <div class="section-heading"><div><h2 id="inspect-heading">4. Hex inspector</h2><p>Jump to an offset or select a difference region. Changed bytes are highlighted.</p></div></div>
-      <div class="controls-grid inspector-controls"><label>Offset (decimal or 0x hex)<input id="offsetInput" type="text" value="0" inputmode="text"></label><label>Bytes per row<select id="bytesPerRow"><option value="8">8</option><option value="16" selected>16</option><option value="32">32</option></select></label><label>Rows<input id="rowCount" type="number" min="4" max="64" value="16"></label><button id="inspectButton" class="button primary align-end" type="button" disabled>Inspect</button></div>
-      <div id="hexViewer" class="hex-viewer" tabindex="0"><p class="empty-state">Load at least one file to inspect bytes.</p></div>
-    </section>
+      <section class="panel" aria-labelledby="diff-heading"><div class="section-heading"><div><h2 id="diff-heading">Difference analysis</h2><p>Compare the two files byte by byte.</p></div><div class="button-row"><button id="compareButton" class="button primary" type="button" disabled>Compare files</button><button id="exportReport" class="button secondary" type="button" disabled>Export report</button></div></div><div class="controls-grid"><label>Context bytes<input id="contextBytes" type="number" min="0" max="256" value="16"></label><label>Merge gap<input id="mergeGap" type="number" min="0" max="64" value="0"></label><label>Max regions<input id="maxRegions" type="number" min="10" max="5000" value="500"></label></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Start</th><th>End</th><th>Length</th><th>A bytes</th><th>B bytes</th></tr></thead><tbody id="diffRows"><tr><td colspan="6" class="empty-state">Load two files and run Compare.</td></tr></tbody></table></div></section>
 
-    <section class="panel tools-grid" aria-labelledby="search-heading">
-      <div><h2 id="search-heading">5. Search values</h2><p>Search each loaded file for ASCII text, a byte sequence, or an integer value.</p><div class="stacked-controls"><label>Search type<select id="searchType"><option value="ascii">ASCII text</option><option value="hex">Hex bytes</option><option value="uint8">8-bit integer</option><option value="uint16le">16-bit integer, little-endian</option><option value="uint16be">16-bit integer, big-endian</option><option value="uint32le">32-bit integer, little-endian</option><option value="uint32be">32-bit integer, big-endian</option></select></label><label>Value<input id="searchValue" type="text" placeholder="Example: 46 or 4B 65 76 69 6E"></label><button id="searchButton" class="button primary" type="button" disabled>Search files</button></div></div><div><h3>Matches</h3><div id="searchResults" class="result-list"><p class="empty-state">No search performed.</p></div></div>
-    </section>
+      <section class="panel mapper-panel" aria-labelledby="mapper-heading"><div class="section-heading"><div><h2 id="mapper-heading">Player Field Mapper</h2><p>Advanced tool for testing one player's edited values.</p></div><div class="button-row"><button id="graysonPreset" class="button secondary" type="button">Load Grayson test</button><button id="runMapper" class="button primary" type="button" disabled>Analyze player</button></div></div><div class="mapper-identity-grid"><label>First name<input id="mapperFirstName" type="text" placeholder="GRAYSON"></label><label>Last name<input id="mapperLastName" type="text" placeholder="ALLEN"></label><label>Record size<input id="mapperRecordSize" type="number" value="268"></label><label>First-name offset<input id="mapperNameOffset" type="text" value="0xD0"></label></div><div class="mapper-layout"><div><div class="subheading-row"><div><h3>Visible changes</h3></div><button id="addStatRow" class="button secondary compact" type="button">Add rating</button></div><div class="table-wrap"><table class="compact-table"><thead><tr><th>Rating</th><th>Before</th><th>After</th><th></th></tr></thead><tbody id="visibleStatRows"></tbody></table></div></div><aside class="mapper-summary" id="mapperSummary"><h3>Status</h3><p>Load both files and analyze a player.</p></aside></div><div class="mapper-results-heading"><h3>Candidate mappings</h3><div class="button-row"><button id="saveMappings" class="button secondary" type="button" disabled>Save</button><button id="exportMappings" class="button secondary" type="button" disabled>Export JSON</button><label class="button secondary file-button">Import JSON<input id="importMappings" type="file" accept="application/json,.json"></label></div></div><div class="table-wrap"><table><thead><tr><th>Absolute</th><th>Record offset</th><th>A → B</th><th>Δ</th><th>Suggested field</th><th>Encoding</th><th>Confidence</th><th></th></tr></thead><tbody id="mapperRows"><tr><td colspan="8" class="empty-state">No analysis yet.</td></tr></tbody></table></div><div class="saved-map-block"><h3>Saved mappings</h3><div id="savedMapList"><p class="empty-state">No saved mappings.</p></div></div></section>
 
-    <section class="panel" aria-labelledby="notes-heading"><div class="section-heading"><div><h2 id="notes-heading">6. Experiment notes</h2><p>Record the exact in-game change that produced file B.</p></div></div><textarea id="experimentNotes" rows="6" placeholder="Example: Grayson Allen, Field Goal 67 to 80 and Inside Scoring 90 to 70. No other manual changes."></textarea></section>
+      <section class="panel"><div class="section-heading"><div><h2>Hex inspector</h2></div></div><div class="controls-grid inspector-controls"><label>Offset<input id="offsetInput" type="text" value="0"></label><label>Bytes per row<select id="bytesPerRow"><option>8</option><option selected>16</option><option>32</option></select></label><label>Rows<input id="rowCount" type="number" value="16"></label><button id="inspectButton" class="button primary align-end" type="button" disabled>Inspect</button></div><div id="hexViewer" class="hex-viewer"><p class="empty-state">Load a file to inspect bytes.</p></div></section>
+
+      <section class="panel tools-grid"><div><h2>Search values</h2><div class="stacked-controls"><label>Search type<select id="searchType"><option value="ascii">ASCII text</option><option value="hex">Hex bytes</option><option value="uint8">8-bit integer</option><option value="uint16le">16-bit little-endian</option><option value="uint16be">16-bit big-endian</option><option value="uint32le">32-bit little-endian</option><option value="uint32be">32-bit big-endian</option></select></label><label>Value<input id="searchValue" type="text"></label><button id="searchButton" class="button primary" type="button" disabled>Search</button></div></div><div><h3>Matches</h3><div id="searchResults" class="result-list"><p class="empty-state">No search performed.</p></div></div></section>
+
+      <section class="panel"><h2>Experiment notes</h2><textarea id="experimentNotes" rows="5" placeholder="Describe exactly what changed."></textarea></section>
+    </div>
   </main>
 
-  <footer><p>This tool does not decrypt, resign, or upload PS3 saves. Always work from backups.</p></footer>
+  <footer><p>Best guesses are research aids, not confirmed roster definitions. Always keep backups.</p></footer>
   <script src="app.js" defer></script>
   <script src="mapper.js" defer></script>
   <script src="mapper-bridge.js" defer></script>
+  <script src="roster-table.js" defer></script>
 </body>
 </html>
