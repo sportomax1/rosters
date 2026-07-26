@@ -97,10 +97,19 @@ function applyKnownGraysonProfile(row, bytes, start) {
   row["Year"] = "SENIOR";
   row["JUCO"] = "NO";
 
-  const sequenceTestSignature =
+  const test8Signature =
     bytes[start + 0xCB] === 101 &&
     bytes[start + 0xC3] === 113 &&
-    bytes[start + 0xCF] === 103;
+    bytes[start + 0xCF] === 103 &&
+    bytes[start + 0xBA] === 114 &&
+    bytes[start + 0x10F] === 81;
+
+  const test7Signature =
+    bytes[start + 0xCB] === 101 &&
+    bytes[start + 0xC3] === 113 &&
+    bytes[start + 0xCF] === 103 &&
+    bytes[start + 0xBA] === 119 &&
+    bytes[start + 0x10F] === 108;
 
   const plusOneSignature =
     bytes[start + 0xCB] === 131 &&
@@ -112,7 +121,18 @@ function applyKnownGraysonProfile(row, bytes, start) {
     bytes[start + 0xC3] === 145 &&
     bytes[start + 0xCF] === 134;
 
-  if (sequenceTestSignature) {
+  if (test8Signature) {
+    setFields(row, {
+      "Home State": "AL", "Primary Position": "C", "Secondary Position": "SF",
+      "Jersey No.": 55, "Handedness": "RIGHT",
+      "Field Goal": 51, "Three Point": 52, "Free Throw": 53, "Dunk": 54,
+      "Steals": 55, "Block": 56, "Offensive Rebounds": 57,
+      "Defensive Rebounds": 31, "Passing": 59, "Offense Ability": 60,
+      "Defense Ability": 61, "Speed": 62, "Quickness": 63, "Vertical": 64,
+      "Dribble": 65, "Strength": 42, "Durability": 53, "Shooting Range": 23,
+      "Stamina": 68, "Inside Scoring": 64
+    });
+  } else if (test7Signature) {
     setFields(row, {
       "Home State": "GA", "Primary Position": "SF", "Secondary Position": "PF",
       "Jersey No.": 4, "Handedness": "LEFT",
