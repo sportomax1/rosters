@@ -72,12 +72,17 @@ td code { white-space: normal; word-break: break-all; }
 .roster-toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) 150px auto; gap: 12px; margin-bottom: 14px; }
 .simple-summary { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: #0a1322; color: var(--muted); }
 .roster-table-wrap { max-height: 68vh; overflow: auto; }
-.roster-table { min-width: 1050px; }
-.roster-table td:first-child, .roster-table th:first-child { position: sticky; left: 0; background: #0b1324; z-index: 1; min-width: 190px; }
+.roster-table { min-width: 5700px; table-layout: auto; }
+.roster-table th, .roster-table td { white-space: nowrap; min-width: 112px; }
+.roster-table th:first-child, .roster-table td:first-child { position: sticky; left: 0; z-index: 4; min-width: 125px; }
+.roster-table thead tr:first-child th { top: 0; z-index: 5; text-align: center; border-right: 1px solid var(--border); }
+.roster-table thead tr:nth-child(2) th { top: 36px; z-index: 4; }
+.roster-table thead th:first-child { background: #0b1324; }
 .roster-table tbody td:first-child { background: #101a2c; }
-.guess-cell { color: #a7f3d0; font-weight: 800; }
+.roster-table tbody tr:hover td:first-child { background: #14213a; }
+.roster-table td:nth-child(2), .roster-table td:nth-child(3) { font-weight: 800; color: #e0f2fe; }
+.changed-value { color: #fde68a; font-weight: 800; }
 .test-subject { outline: 1px solid #155e75; outline-offset: -1px; }
-.test-chip { display: inline-block; margin-left: 8px; border-radius: 999px; padding: 3px 7px; background: #083344; color: #a5f3fc; font-size: .7rem; }
 .table-note { margin-bottom: 0; font-size: .84rem; }
 .hex-viewer { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: #050a12; padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .83rem; line-height: 1.75; }
 .hex-row { display: grid; grid-template-columns: 100px minmax(360px, 1fr) minmax(140px, .5fr); gap: 12px; white-space: nowrap; }
