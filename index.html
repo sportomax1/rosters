@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">PS3 SAVE RESEARCH TOOL</p>
       <h1>NCAA Basketball Roster Lab</h1>
-      <p class="subtitle">Compare and inspect NCAA Basketball 10 <code>SYS-DATA</code> roster saves locally in your browser.</p>
+      <p class="subtitle">Compare, inspect, and map NCAA Basketball 10 <code>SYS-DATA</code> roster saves locally in your browser.</p>
     </div>
     <span class="privacy-badge">Local-only processing</span>
   </header>
@@ -22,7 +22,7 @@
       <div class="section-heading">
         <div>
           <h2 id="load-heading">1. Load controlled roster saves</h2>
-          <p>Use two saves where you changed exactly one known item, such as a rating from 70 to 71.</p>
+          <p>File A should be the original. File B should be the same roster after one player was edited.</p>
         </div>
         <button id="clearAll" class="button secondary" type="button">Clear all</button>
       </div>
@@ -75,100 +75,124 @@
 
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Length</th>
-              <th>A bytes</th>
-              <th>B bytes</th>
-            </tr>
-          </thead>
-          <tbody id="diffRows">
-            <tr><td colspan="6" class="empty-state">Load two files and run Compare.</td></tr>
-          </tbody>
+          <thead><tr><th>#</th><th>Start</th><th>End</th><th>Length</th><th>A bytes</th><th>B bytes</th></tr></thead>
+          <tbody id="diffRows"><tr><td colspan="6" class="empty-state">Load two files and run Compare.</td></tr></tbody>
         </table>
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="inspect-heading">
+    <section class="panel mapper-panel" aria-labelledby="mapper-heading">
       <div class="section-heading">
         <div>
-          <h2 id="inspect-heading">3. Hex inspector</h2>
-          <p>Jump to an offset or select a difference region. Changed bytes are highlighted.</p>
+          <p class="eyebrow">NEW</p>
+          <h2 id="mapper-heading">3. Player Field Mapper</h2>
+          <p>Find a player record, isolate its changed bytes, and rank likely stat mappings. Guesses remain editable and can be exported or imported later.</p>
+        </div>
+        <div class="button-row">
+          <button id="graysonPreset" class="button secondary" type="button">Load Grayson test</button>
+          <button id="runMapper" class="button primary" type="button" disabled>Analyze player</button>
         </div>
       </div>
 
-      <div class="controls-grid inspector-controls">
-        <label>Offset (decimal or 0x hex)
-          <input id="offsetInput" type="text" value="0" inputmode="text">
+      <div class="mapper-identity-grid">
+        <label>First name
+          <input id="mapperFirstName" type="text" placeholder="GRAYSON" autocomplete="off">
         </label>
-        <label>Bytes per row
-          <select id="bytesPerRow">
-            <option value="8">8</option>
-            <option value="16" selected>16</option>
-            <option value="32">32</option>
-          </select>
+        <label>Last name
+          <input id="mapperLastName" type="text" placeholder="ALLEN" autocomplete="off">
         </label>
-        <label>Rows
-          <input id="rowCount" type="number" min="4" max="64" value="16">
+        <label>Player record size
+          <input id="mapperRecordSize" type="number" min="64" max="1024" value="268">
         </label>
-        <button id="inspectButton" class="button primary align-end" type="button" disabled>Inspect</button>
+        <label>First-name offset in record
+          <input id="mapperNameOffset" type="text" value="0xD0">
+        </label>
       </div>
 
-      <div id="hexViewer" class="hex-viewer" tabindex="0">
-        <p class="empty-state">Load at least one file to inspect bytes.</p>
+      <div class="mapper-layout">
+        <div>
+          <div class="subheading-row">
+            <div>
+              <h3>Visible rating changes</h3>
+              <p>Enter only the ratings you know changed in the game.</p>
+            </div>
+            <button id="addStatRow" class="button secondary compact" type="button">Add rating</button>
+          </div>
+          <div class="table-wrap mapper-stat-wrap">
+            <table class="mapper-table compact-table">
+              <thead><tr><th>Rating</th><th>Before</th><th>After</th><th></th></tr></thead>
+              <tbody id="visibleStatRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <aside class="mapper-summary" id="mapperSummary" aria-live="polite">
+          <h3>Analysis status</h3>
+          <p>Load both files, enter the player name, then run the mapper.</p>
+        </aside>
       </div>
+
+      <div class="mapper-results-heading">
+        <div>
+          <h3>Candidate byte mappings</h3>
+          <p>The app scores exact direct, offset, inverse, and scaled relationships. A high score is evidence—not final proof.</p>
+        </div>
+        <div class="button-row">
+          <button id="saveMappings" class="button secondary" type="button" disabled>Save in browser</button>
+          <button id="exportMappings" class="button secondary" type="button" disabled>Export mapping JSON</button>
+          <label class="button secondary file-button">Import mapping JSON<input id="importMappings" type="file" accept="application/json,.json"></label>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="mapper-table">
+          <thead>
+            <tr>
+              <th>Absolute offset</th><th>Record offset</th><th>A → B</th><th>Δ</th><th>Suggested field</th><th>Encoding guess</th><th>Confidence</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="mapperRows"><tr><td colspan="8" class="empty-state">No player analysis yet.</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="saved-map-block">
+        <h3>Saved field map</h3>
+        <div id="savedMapList" class="saved-map-list"><p class="empty-state">No saved mappings yet.</p></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="inspect-heading">
+      <div class="section-heading"><div><h2 id="inspect-heading">4. Hex inspector</h2><p>Jump to an offset or select a difference region. Changed bytes are highlighted.</p></div></div>
+      <div class="controls-grid inspector-controls">
+        <label>Offset (decimal or 0x hex)<input id="offsetInput" type="text" value="0" inputmode="text"></label>
+        <label>Bytes per row<select id="bytesPerRow"><option value="8">8</option><option value="16" selected>16</option><option value="32">32</option></select></label>
+        <label>Rows<input id="rowCount" type="number" min="4" max="64" value="16"></label>
+        <button id="inspectButton" class="button primary align-end" type="button" disabled>Inspect</button>
+      </div>
+      <div id="hexViewer" class="hex-viewer" tabindex="0"><p class="empty-state">Load at least one file to inspect bytes.</p></div>
     </section>
 
     <section class="panel tools-grid" aria-labelledby="search-heading">
       <div>
-        <h2 id="search-heading">4. Search values</h2>
+        <h2 id="search-heading">5. Search values</h2>
         <p>Search each loaded file for ASCII text, a byte sequence, or an integer value.</p>
-
         <div class="stacked-controls">
-          <label>Search type
-            <select id="searchType">
-              <option value="ascii">ASCII text</option>
-              <option value="hex">Hex bytes</option>
-              <option value="uint8">8-bit integer</option>
-              <option value="uint16le">16-bit integer, little-endian</option>
-              <option value="uint16be">16-bit integer, big-endian</option>
-              <option value="uint32le">32-bit integer, little-endian</option>
-              <option value="uint32be">32-bit integer, big-endian</option>
-            </select>
-          </label>
-          <label>Value
-            <input id="searchValue" type="text" placeholder="Example: 46 or 4B 65 76 69 6E">
-          </label>
+          <label>Search type<select id="searchType"><option value="ascii">ASCII text</option><option value="hex">Hex bytes</option><option value="uint8">8-bit integer</option><option value="uint16le">16-bit integer, little-endian</option><option value="uint16be">16-bit integer, big-endian</option><option value="uint32le">32-bit integer, little-endian</option><option value="uint32be">32-bit integer, big-endian</option></select></label>
+          <label>Value<input id="searchValue" type="text" placeholder="Example: 46 or 4B 65 76 69 6E"></label>
           <button id="searchButton" class="button primary" type="button" disabled>Search files</button>
         </div>
       </div>
-
-      <div>
-        <h3>Matches</h3>
-        <div id="searchResults" class="result-list">
-          <p class="empty-state">No search performed.</p>
-        </div>
-      </div>
+      <div><h3>Matches</h3><div id="searchResults" class="result-list"><p class="empty-state">No search performed.</p></div></div>
     </section>
 
     <section class="panel" aria-labelledby="notes-heading">
-      <div class="section-heading">
-        <div>
-          <h2 id="notes-heading">5. Experiment notes</h2>
-          <p>Record the exact in-game change that produced file B.</p>
-        </div>
-      </div>
-      <textarea id="experimentNotes" rows="6" placeholder="Example: Colorado player #12, three-point rating changed from 70 to 71. No other changes. Saved immediately afterward."></textarea>
+      <div class="section-heading"><div><h2 id="notes-heading">6. Experiment notes</h2><p>Record the exact in-game change that produced file B.</p></div></div>
+      <textarea id="experimentNotes" rows="6" placeholder="Example: Grayson Allen, Field Goal 67 to 80 and Inside Scoring 90 to 70. No other manual changes."></textarea>
     </section>
   </main>
 
-  <footer>
-    <p>This tool does not decrypt, resign, or upload PS3 saves. Always work from backups.</p>
-  </footer>
-
+  <footer><p>This tool does not decrypt, resign, or upload PS3 saves. Always work from backups.</p></footer>
   <script src="app.js" defer></script>
+  <script src="mapper.js" defer></script>
 </body>
 </html>
