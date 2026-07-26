@@ -46,7 +46,6 @@ function scanPlayerRecords(bytes) {
     const firstByte = bytes[start + FIRST_NAME_OFFSET];
     const lastByte = bytes[start + LAST_NAME_OFFSET];
     if (firstByte < 65 || firstByte > 90 || lastByte < 65 || lastByte > 90) continue;
-    if (start + FIRST_NAME_OFFSET > 0 && bytes[start + FIRST_NAME_OFFSET - 1] !== 0) continue;
 
     const first = readFixedName(bytes, start + FIRST_NAME_OFFSET, LAST_NAME_OFFSET - FIRST_NAME_OFFSET);
     const last = readFixedName(bytes, start + LAST_NAME_OFFSET, RECORD_SIZE - LAST_NAME_OFFSET);
