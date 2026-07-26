@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">PS3 ROSTER RESEARCH</p>
       <h1>NCAA Basketball Roster Lab</h1>
-      <p class="subtitle">Upload a roster and view the current best-guess player table. Everything stays in your browser.</p>
+      <p class="subtitle">Upload a roster and view one database-style row per player. Everything stays in your browser.</p>
     </div>
     <span class="privacy-badge">Local-only</span>
   </header>
@@ -20,7 +20,7 @@
   <main>
     <section class="panel upload-grid" aria-labelledby="load-heading">
       <div class="section-heading">
-        <div><h2 id="load-heading">Upload roster files</h2><p>File A is enough for the roster table. Add File B only when comparing an edited save.</p></div>
+        <div><h2 id="load-heading">Upload roster files</h2><p>File A is enough for a roster preview. Add File B to compare the same players before and after changes.</p></div>
         <button id="clearAll" class="button secondary" type="button">Clear</button>
       </div>
       <label class="drop-zone" id="dropA"><span class="drop-title">Roster file A</span><span class="drop-copy">Choose or drop <code>SYS-DATA</code></span><input id="fileA" type="file"><span id="metaA" class="file-meta">No file loaded</span></label>
@@ -35,22 +35,29 @@
     <div id="tab-roster" class="tab-view active">
       <section class="panel roster-panel">
         <div class="section-heading">
-          <div><h2>Best-guess roster table</h2><p>Every detected player becomes one row. Confirmed guesses are labeled; raw candidates remain visible for comparison.</p></div>
-          <div class="button-row"><select id="rosterSource" aria-label="Roster source"><option value="A">Use File A</option><option value="B">Use File B</option></select><button id="scanRoster" class="button primary" type="button" disabled>Scan players</button></div>
+          <div><h2>Configurable player database preview</h2><p>One row per player. All 42 configurable fields shown in your Grayson Allen screenshots are included as columns.</p></div>
+          <div class="button-row">
+            <select id="rosterSource" aria-label="Roster source">
+              <option value="A">Show File A</option>
+              <option value="B">Show File B</option>
+              <option value="COMPARE">Compare A → B</option>
+            </select>
+            <button id="scanRoster" class="button primary" type="button" disabled>Build table</button>
+          </div>
         </div>
         <div class="roster-toolbar">
           <label>Search players<input id="rosterSearch" type="search" placeholder="Grayson Allen"></label>
           <label>Rows shown<select id="rosterLimit"><option>100</option><option selected>500</option><option>1000</option><option value="99999">All</option></select></label>
           <button id="exportRosterCsv" class="button secondary align-end" type="button" disabled>Export CSV</button>
         </div>
-        <div id="rosterSummary" class="simple-summary" aria-live="polite">Upload File A, then click <strong>Scan players</strong>.</div>
+        <div id="rosterSummary" class="simple-summary" aria-live="polite">Upload File A, then click <strong>Build table</strong>.</div>
         <div class="table-wrap roster-table-wrap">
           <table class="roster-table">
-            <thead><tr><th>Player</th><th>Record</th><th title="Current high-confidence guess">Field Goal*</th><th title="Current high-confidence guess">Inside Scoring*</th><th title="Possible derived overall field; raw byte">Overall raw?</th><th title="Possible status/role field; raw byte">Status raw?</th><th>Raw +BA</th><th>Raw +CB</th><th>Raw +CE</th><th>Raw +FA</th></tr></thead>
-            <tbody id="rosterRows"><tr><td colspan="10" class="empty-state">No roster scanned yet.</td></tr></tbody>
+            <thead id="rosterHead"></thead>
+            <tbody id="rosterRows"><tr><td class="empty-state">No roster scanned yet.</td></tr></tbody>
           </table>
         </div>
-        <p class="table-note"><strong>*Current best guesses:</strong> Field Goal = byte at record +0xCB minus 50. Inside Scoring = 210 minus byte at record +0xBA. Other columns are intentionally raw until better mappings are proven.</p>
+        <p class="table-note"><strong>Known today:</strong> names, Field Goal guess, and Inside Scoring guess. Every other configurable column is present but displays <strong>—</strong> until its byte mapping is identified. Overall, archetype, and player status are excluded because they are derived rather than directly configurable.</p>
       </section>
     </div>
 
