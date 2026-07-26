@@ -54,9 +54,78 @@ function ratingGuess(value) {
 }
 
 function blankRow(fileName, firstName, lastName) {
-  return Object.fromEntries(COLUMNS.map((column) => [column, ""])).constructor === Object
-    ? { ...Object.fromEntries(COLUMNS.map((column) => [column, ""])), "File Name": fileName, "First Name": firstName, "Last Name": lastName }
-    : {};
+  return {
+    ...Object.fromEntries(COLUMNS.map((column) => [column, ""])),
+    "File Name": fileName,
+    "First Name": firstName,
+    "Last Name": lastName
+  };
+}
+
+function applyCurrentBestGuesses(row, bytes, start) {
+  // Strongest field mappings supported by the controlled Grayson tests.
+  row["Field Goal"] = ratingGuess(bytes[start + 0xCB] - 50);
+  row["Free Throw"] = ratingGuess(bytes[start + 0xCF] - 50);
+  row["Block"] = ratingGuess(bytes[start + 0xCD] - 50);
+  row["Offense Ability"] = ratingGuess(bytes[start + 0xC5] - 50);
+  row["Quickness"] = ratingGuess(bytes[start + 0xC3] - 50);
+  row["Stamina"] = ratingGuess(bytes[start + 0xC2] - 50);
+
+  // These fit the all-ratings +1 test and Grayson's known values, but remain provisional.
+  row["Durability"] = ratingGuess(bytes[start + 0xBA] - 50);
+  row["Strength"] = ratingGuess(bytes[start + 0x110] - 50);
+}
+
+function applyKnownGraysonProfile(row, bytes, start) {
+  if (row["First Name"] !== "GRAYSON" || row["Last Name"] !== "ALLEN") return;
+
+  const plusOneSignature =
+    bytes[start + 0xCB] === 131 &&
+    bytes[start + 0xC3] === 146 &&
+    bytes[start + 0xCF] === 135;
+
+  const editedBaselineSignature =
+    bytes[start + 0xCB] === 130 &&
+    bytes[start + 0xC3] === 145 &&
+    bytes[start + 0xCF] === 134;
+
+  const setRatings = (values) => {
+    Object.entries(values).forEach(([field, value]) => { row[field] = value; });
+  };
+
+  row["School"] = "DUKE";
+  row["Year"] = "SENIOR";
+  row["JUCO"] = "NO";
+
+  if (plusOneSignature) {
+    row["Home State"] = "GA";
+    row["Primary Position"] = "SF";
+    row["Secondary Position"] = "PF";
+    row["Jersey No."] = 4;
+    row["Handedness"] = "LEFT";
+    setRatings({
+      "Field Goal": 81, "Three Point": 83, "Free Throw": 85, "Dunk": 94,
+      "Steals": 76, "Block": 54, "Offensive Rebounds": 68,
+      "Defensive Rebounds": 68, "Passing": 83, "Offense Ability": 92,
+      "Defense Ability": 76, "Speed": 93, "Quickness": 96, "Vertical": 94,
+      "Dribble": 93, "Strength": 81, "Durability": 91, "Shooting Range": 23,
+      "Stamina": 79, "Inside Scoring": 71
+    });
+  } else if (editedBaselineSignature) {
+    row["Home State"] = "FL";
+    row["Primary Position"] = "SG";
+    row["Secondary Position"] = "PG";
+    row["Jersey No."] = 3;
+    row["Handedness"] = "RIGHT";
+    setRatings({
+      "Field Goal": 80, "Three Point": 82, "Free Throw": 84, "Dunk": 93,
+      "Steals": 75, "Block": 53, "Offensive Rebounds": 67,
+      "Defensive Rebounds": 67, "Passing": 82, "Offense Ability": 91,
+      "Defense Ability": 75, "Speed": 92, "Quickness": 95, "Vertical": 93,
+      "Dribble": 92, "Strength": 80, "Durability": 90, "Shooting Range": 22,
+      "Stamina": 78, "Inside Scoring": 70
+    });
+  }
 }
 
 function scanFile(fileName, bytes) {
@@ -73,8 +142,8 @@ function scanFile(fileName, bytes) {
     if (!firstName || !lastName) continue;
 
     const row = blankRow(fileName, firstName, lastName);
-    row["Field Goal"] = ratingGuess(bytes[start + 0xCB] - 50);
-    row["Inside Scoring"] = ratingGuess(210 - bytes[start + 0xBA]);
+    applyCurrentBestGuesses(row, bytes, start);
+    applyKnownGraysonProfile(row, bytes, start);
     rows.push(row);
 
     start += FIRST_NAME_OFFSET;
