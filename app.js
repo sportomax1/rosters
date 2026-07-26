@@ -86,88 +86,6 @@ function applyConfirmedRatings(row, bytes, start) {
   });
 }
 
-function setFields(row, values) {
-  Object.entries(values).forEach(([field, value]) => { row[field] = value; });
-}
-
-function applyKnownGraysonProfile(row, bytes, start) {
-  if (row["First Name"] !== "GRAYSON" || row["Last Name"] !== "ALLEN") return;
-
-  row["School"] = "DUKE";
-  row["Year"] = "SENIOR";
-  row["JUCO"] = "NO";
-
-  const test8Signature =
-    bytes[start + 0xCB] === 101 &&
-    bytes[start + 0xC3] === 113 &&
-    bytes[start + 0xCF] === 103 &&
-    bytes[start + 0xBA] === 114 &&
-    bytes[start + 0x10F] === 81;
-
-  const test7Signature =
-    bytes[start + 0xCB] === 101 &&
-    bytes[start + 0xC3] === 113 &&
-    bytes[start + 0xCF] === 103 &&
-    bytes[start + 0xBA] === 119 &&
-    bytes[start + 0x10F] === 108;
-
-  const plusOneSignature =
-    bytes[start + 0xCB] === 131 &&
-    bytes[start + 0xC3] === 146 &&
-    bytes[start + 0xCF] === 135;
-
-  const editedBaselineSignature =
-    bytes[start + 0xCB] === 130 &&
-    bytes[start + 0xC3] === 145 &&
-    bytes[start + 0xCF] === 134;
-
-  if (test8Signature) {
-    setFields(row, {
-      "Home State": "AL", "Primary Position": "C", "Secondary Position": "SF",
-      "Jersey No.": 55, "Handedness": "RIGHT",
-      "Field Goal": 51, "Three Point": 52, "Free Throw": 53, "Dunk": 54,
-      "Steals": 55, "Block": 56, "Offensive Rebounds": 57,
-      "Defensive Rebounds": 31, "Passing": 59, "Offense Ability": 60,
-      "Defense Ability": 61, "Speed": 62, "Quickness": 63, "Vertical": 64,
-      "Dribble": 65, "Strength": 42, "Durability": 53, "Shooting Range": 23,
-      "Stamina": 68, "Inside Scoring": 64
-    });
-  } else if (test7Signature) {
-    setFields(row, {
-      "Home State": "GA", "Primary Position": "SF", "Secondary Position": "PF",
-      "Jersey No.": 4, "Handedness": "LEFT",
-      "Field Goal": 51, "Three Point": 52, "Free Throw": 53, "Dunk": 54,
-      "Steals": 55, "Block": 56, "Offensive Rebounds": 57,
-      "Defensive Rebounds": 58, "Passing": 59, "Offense Ability": 60,
-      "Defense Ability": 61, "Speed": 62, "Quickness": 63, "Vertical": 64,
-      "Dribble": 65, "Strength": 66, "Durability": 67, "Shooting Range": 24,
-      "Stamina": 68, "Inside Scoring": 69
-    });
-  } else if (plusOneSignature) {
-    setFields(row, {
-      "Home State": "GA", "Primary Position": "SF", "Secondary Position": "PF",
-      "Jersey No.": 4, "Handedness": "LEFT",
-      "Field Goal": 81, "Three Point": 83, "Free Throw": 85, "Dunk": 94,
-      "Steals": 76, "Block": 54, "Offensive Rebounds": 68,
-      "Defensive Rebounds": 68, "Passing": 83, "Offense Ability": 92,
-      "Defense Ability": 76, "Speed": 93, "Quickness": 96, "Vertical": 94,
-      "Dribble": 93, "Strength": 81, "Durability": 91, "Shooting Range": 23,
-      "Stamina": 79, "Inside Scoring": 71
-    });
-  } else if (editedBaselineSignature) {
-    setFields(row, {
-      "Home State": "FL", "Primary Position": "SG", "Secondary Position": "PG",
-      "Jersey No.": 3, "Handedness": "RIGHT",
-      "Field Goal": 80, "Three Point": 82, "Free Throw": 84, "Dunk": 93,
-      "Steals": 75, "Block": 53, "Offensive Rebounds": 67,
-      "Defensive Rebounds": 67, "Passing": 82, "Offense Ability": 91,
-      "Defense Ability": 75, "Speed": 92, "Quickness": 95, "Vertical": 93,
-      "Dribble": 92, "Strength": 80, "Durability": 90, "Shooting Range": 22,
-      "Stamina": 78, "Inside Scoring": 70
-    });
-  }
-}
-
 function scanFile(fileName, bytes) {
   const rows = [];
   const maxStart = bytes.length - RECORD_SIZE;
@@ -183,7 +101,6 @@ function scanFile(fileName, bytes) {
 
     const row = blankRow(fileName, firstName, lastName);
     applyConfirmedRatings(row, bytes, start);
-    applyKnownGraysonProfile(row, bytes, start);
     rows.push(row);
 
     start += FIRST_NAME_OFFSET;
