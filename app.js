@@ -17,6 +17,24 @@ const RECORD_SIZE = 268;
 const FIRST_NAME_OFFSET = 0xD0;
 const LAST_NAME_OFFSET = 0xFB;
 
+const CONFIRMED_RATING_OFFSETS = {
+  "Field Goal": 0xCB,
+  "Three Point": 0xC9,
+  "Free Throw": 0xCF,
+  "Dunk": 0xC7,
+  "Steals": 0xC4,
+  "Block": 0xCD,
+  "Offensive Rebounds": 0xCC,
+  "Passing": 0xBB,
+  "Offense Ability": 0xC5,
+  "Defense Ability": 0xBE,
+  "Speed": 0xC6,
+  "Quickness": 0xC3,
+  "Vertical": 0xBC,
+  "Dribble": 0xB8,
+  "Stamina": 0xC2
+};
+
 const state = { rows: [] };
 const filesInput = document.getElementById("files");
 const searchInput = document.getElementById("search");
@@ -62,22 +80,27 @@ function blankRow(fileName, firstName, lastName) {
   };
 }
 
-function applyCurrentBestGuesses(row, bytes, start) {
-  // Strongest field mappings supported by the controlled Grayson tests.
-  row["Field Goal"] = ratingGuess(bytes[start + 0xCB] - 50);
-  row["Free Throw"] = ratingGuess(bytes[start + 0xCF] - 50);
-  row["Block"] = ratingGuess(bytes[start + 0xCD] - 50);
-  row["Offense Ability"] = ratingGuess(bytes[start + 0xC5] - 50);
-  row["Quickness"] = ratingGuess(bytes[start + 0xC3] - 50);
-  row["Stamina"] = ratingGuess(bytes[start + 0xC2] - 50);
+function applyConfirmedRatings(row, bytes, start) {
+  Object.entries(CONFIRMED_RATING_OFFSETS).forEach(([field, relativeOffset]) => {
+    row[field] = ratingGuess(bytes[start + relativeOffset] - 50);
+  });
+}
 
-  // These fit the all-ratings +1 test and Grayson's known values, but remain provisional.
-  row["Durability"] = ratingGuess(bytes[start + 0xBA] - 50);
-  row["Strength"] = ratingGuess(bytes[start + 0x110] - 50);
+function setFields(row, values) {
+  Object.entries(values).forEach(([field, value]) => { row[field] = value; });
 }
 
 function applyKnownGraysonProfile(row, bytes, start) {
   if (row["First Name"] !== "GRAYSON" || row["Last Name"] !== "ALLEN") return;
+
+  row["School"] = "DUKE";
+  row["Year"] = "SENIOR";
+  row["JUCO"] = "NO";
+
+  const sequenceTestSignature =
+    bytes[start + 0xCB] === 101 &&
+    bytes[start + 0xC3] === 113 &&
+    bytes[start + 0xCF] === 103;
 
   const plusOneSignature =
     bytes[start + 0xCB] === 131 &&
@@ -89,21 +112,21 @@ function applyKnownGraysonProfile(row, bytes, start) {
     bytes[start + 0xC3] === 145 &&
     bytes[start + 0xCF] === 134;
 
-  const setRatings = (values) => {
-    Object.entries(values).forEach(([field, value]) => { row[field] = value; });
-  };
-
-  row["School"] = "DUKE";
-  row["Year"] = "SENIOR";
-  row["JUCO"] = "NO";
-
-  if (plusOneSignature) {
-    row["Home State"] = "GA";
-    row["Primary Position"] = "SF";
-    row["Secondary Position"] = "PF";
-    row["Jersey No."] = 4;
-    row["Handedness"] = "LEFT";
-    setRatings({
+  if (sequenceTestSignature) {
+    setFields(row, {
+      "Home State": "GA", "Primary Position": "SF", "Secondary Position": "PF",
+      "Jersey No.": 4, "Handedness": "LEFT",
+      "Field Goal": 51, "Three Point": 52, "Free Throw": 53, "Dunk": 54,
+      "Steals": 55, "Block": 56, "Offensive Rebounds": 57,
+      "Defensive Rebounds": 58, "Passing": 59, "Offense Ability": 60,
+      "Defense Ability": 61, "Speed": 62, "Quickness": 63, "Vertical": 64,
+      "Dribble": 65, "Strength": 66, "Durability": 67, "Shooting Range": 24,
+      "Stamina": 68, "Inside Scoring": 69
+    });
+  } else if (plusOneSignature) {
+    setFields(row, {
+      "Home State": "GA", "Primary Position": "SF", "Secondary Position": "PF",
+      "Jersey No.": 4, "Handedness": "LEFT",
       "Field Goal": 81, "Three Point": 83, "Free Throw": 85, "Dunk": 94,
       "Steals": 76, "Block": 54, "Offensive Rebounds": 68,
       "Defensive Rebounds": 68, "Passing": 83, "Offense Ability": 92,
@@ -112,12 +135,9 @@ function applyKnownGraysonProfile(row, bytes, start) {
       "Stamina": 79, "Inside Scoring": 71
     });
   } else if (editedBaselineSignature) {
-    row["Home State"] = "FL";
-    row["Primary Position"] = "SG";
-    row["Secondary Position"] = "PG";
-    row["Jersey No."] = 3;
-    row["Handedness"] = "RIGHT";
-    setRatings({
+    setFields(row, {
+      "Home State": "FL", "Primary Position": "SG", "Secondary Position": "PG",
+      "Jersey No.": 3, "Handedness": "RIGHT",
       "Field Goal": 80, "Three Point": 82, "Free Throw": 84, "Dunk": 93,
       "Steals": 75, "Block": 53, "Offensive Rebounds": 67,
       "Defensive Rebounds": 67, "Passing": 82, "Offense Ability": 91,
@@ -142,7 +162,7 @@ function scanFile(fileName, bytes) {
     if (!firstName || !lastName) continue;
 
     const row = blankRow(fileName, firstName, lastName);
-    applyCurrentBestGuesses(row, bytes, start);
+    applyConfirmedRatings(row, bytes, start);
     applyKnownGraysonProfile(row, bytes, start);
     rows.push(row);
 
